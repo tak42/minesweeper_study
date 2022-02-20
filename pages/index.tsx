@@ -68,9 +68,22 @@ const Home: NextPage = () => {
   const [level, setLevel] = useState(0)
   const field: number[][] = useMemo(() => {
     const length = level < 1 ? 8 : 16
-    console.log([...Array(length)].map(() => [...Array(length)].map(() => 0)))
     return [...Array(length)].map(() => [...Array(length)].map(() => 0))
   }, [level])
+
+  const shuffle = () => {
+    const arr = [...Array(level < 1 ? 8 : 16)].map((elm, idx) => idx + 1)
+    let a = arr.length
+    while (a) {
+      const j = Math.floor(Math.random() * a)
+      const t = arr[--a]
+      arr[a] = arr[j]
+      arr[j] = t
+    }
+    return arr
+  }
+
+  console.log(shuffle())
 
   return (
     <Container>
