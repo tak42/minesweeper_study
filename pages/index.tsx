@@ -36,11 +36,11 @@ const Grid = styled.div`
   }
 `
 
-const Area = styled.div`
+const Area = styled.div<{ click: number }>`
   width: 50px;
   height: 50px;
   border: 1px solid black;
-  background-color: #eee;
+  background-color: ${(props) => (props.click === 1 ? 'transparent' : 'green')};
   text-align: center;
   line-height: 50px;
 `
@@ -69,6 +69,13 @@ const Logo = styled.span`
 const Home: NextPage = () => {
   const [level, setLevel] = useState(0)
 
+  const fieldData: number[][] = useMemo(() => {
+    const length = level < 1 ? 8 : 16
+    return [...Array(length)].map(() => [...Array(length)].map(() => 0))
+  }, [level])
+
+  const [field, setField] = useState(fieldData)
+
   const shuffle = (len: number) => {
     const arr = [...Array(len)].map((elm, idx) => idx)
     let a = arr.length
@@ -84,21 +91,23 @@ const Home: NextPage = () => {
   const bombSet = (val: number) => {
     return val === 99 ? <i className="fas fa-bomb fa-lg" /> : 0
   }
-  const field: number[][] = useMemo(() => {
-    const length = level < 1 ? 8 : 16
-    return [...Array(length)].map(() => [...Array(length)].map(() => 0))
-  }, [level])
 
   const bombPosition: number[][] = useMemo(() => {
     const length = level < 1 ? 8 : 16
     const a1 = shuffle(length)
     const a2 = shuffle(length)
-    const bombSetFld = [...Array(length)].map(() => [...Array(length)].map(() => 0))
+    const bombSetFld = fieldData
     console.log(a1)
     console.log(a2)
     for (let i = 0; i < length; i++) bombSetFld[a1[i]][a2[i]] = 99
     return bombSetFld
-  }, [level])
+  }, [level, fieldData])
+
+  const overClick = (x: number, y: number) => {
+    const newField = JSON.parse(JSON.stringify(field))
+    newField[x][y] = 1
+    setField(newField)
+  }
 
   return (
     <Container>
@@ -112,7 +121,11 @@ const Home: NextPage = () => {
       <Main>
         <Grid>
           {bombPosition.map((row, x) =>
-            row.map((col, y) => <Area key={`${x}-${y}`}>{bombSet(col)}</Area>)
+            row.map((col, y) => (
+              <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
+                {bombSet(col)}
+              </Area>
+            ))
           )}
         </Grid>
       </Main>
