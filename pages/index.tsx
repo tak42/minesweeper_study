@@ -88,8 +88,8 @@ const Home: NextPage = () => {
     return arr
   }
 
-  const bombSet = (val: number) => {
-    return val === 99 ? <i className="fas fa-bomb fa-lg" /> : 0
+  const bombSet = (val: number, x: number, y: number) => {
+    return val === 99 && field[x][y] === 1 ? <i className="fas fa-bomb fa-lg" /> : ''
   }
 
   const bombPosition: number[][] = useMemo(() => {
@@ -123,7 +123,7 @@ const Home: NextPage = () => {
           {bombPosition.map((row, x) =>
             row.map((col, y) => (
               <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
-                {bombSet(col)}
+                {bombSet(col, x, y)}
               </Area>
             ))
           )}
