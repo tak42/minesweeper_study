@@ -114,7 +114,7 @@ const Home: NextPage = () => {
       for (const direction of directions) {
         const newX = x + direction[0] * 1
         const newY = y + direction[1] * 1
-        if (newX < 0 || newY < 0 || newX > length - 1 || newY > length - 1) break
+        if (newX < 0 || newY < 0 || newX > length - 1 || newY > length - 1) continue
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
