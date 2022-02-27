@@ -36,11 +36,11 @@ const Grid = styled.div`
   }
 `
 
-const Area = styled.div<{ click: number }>`
+const Area = styled.div<{ click: boolean }>`
   width: 50px;
   height: 50px;
   border: 1px solid black;
-  background-color: ${(props) => (props.click === 1 ? 'transparent' : 'green')};
+  background-color: ${(props) => (props.click ? 'transparent' : 'green')};
   text-align: center;
   line-height: 50px;
 `
@@ -74,7 +74,12 @@ const Home: NextPage = () => {
     return [...Array(length)].map(() => [...Array(length)].map(() => 0))
   }, [level])
 
-  const [field, setField] = useState(fieldData)
+  const fieldClick: boolean[][] = useMemo(() => {
+    const length = level < 1 ? 8 : 16
+    return [...Array(length)].map(() => [...Array(length)].map(() => false))
+  }, [level])
+
+  const [field, setField] = useState(fieldClick)
 
   const shuffle = (len: number) => {
     const arr = [...Array(len)].map((elm, idx) => idx)
@@ -89,7 +94,8 @@ const Home: NextPage = () => {
   }
 
   const bombSet = (val: number, x: number, y: number) => {
-    return val === 99 && field[x][y] === 1 ? <i className="fas fa-bomb fa-lg" /> : ''
+    const displayVal = val < 99 && field[x][y] ? val : ''
+    return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
   }
 
   const bombPosition: number[][] = useMemo(() => {
@@ -97,15 +103,28 @@ const Home: NextPage = () => {
     const a1 = shuffle(length)
     const a2 = shuffle(length)
     const bombSetFld = fieldData
-    console.log(a1)
-    console.log(a2)
-    for (let i = 0; i < length; i++) bombSetFld[a1[i]][a2[i]] = 99
+    // prettier-ignore
+    const directions: number[][] = [
+      [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]
+    ]
+    for (let i = 0; i < length; i++) {
+      const x = a1[i]
+      const y = a2[i]
+      bombSetFld[x][y] = 99
+      for (const direction of directions) {
+        const newX = x + direction[0] * 1
+        const newY = y + direction[1] * 1
+        if (newX < 0 || newY < 0 || newX > length - 1 || newY > length - 1) break
+        if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
+      }
+    }
+    console.log(bombSetFld)
     return bombSetFld
   }, [level, fieldData])
 
   const overClick = (x: number, y: number) => {
     const newField = JSON.parse(JSON.stringify(field))
-    newField[x][y] = 1
+    newField[x][y] = true
     setField(newField)
   }
 
