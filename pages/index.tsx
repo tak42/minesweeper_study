@@ -27,7 +27,7 @@ const Grid = styled.div`
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  max-width: 420px;
+  max-width: 500px;
   margin-top: 3rem;
 
   @media (max-width: 600px) {
@@ -71,7 +71,8 @@ const Home: NextPage = () => {
 
   const fieldData: number[][] = useMemo(() => {
     const length = level < 1 ? 8 : 16
-    return [...Array(length)].map(() => [...Array(length)].map(() => 0))
+    const margin = level < 1 ? 2 : 4
+    return [...Array(length)].map(() => [...Array(length + margin)].map(() => 0))
   }, [level])
 
   const fieldClick: boolean[][] = useMemo(() => {
@@ -93,12 +94,12 @@ const Home: NextPage = () => {
     return arr
   }
 
-  const bombSet = (val: number, x: number, y: number) => {
+  const clickPanel = (val: number, x: number, y: number) => {
     const displayVal = val < 99 && field[x][y] ? val : ''
     return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
   }
 
-  const bombPosition: number[][] = useMemo(() => {
+  const bombSet = () => {
     const length = level < 1 ? 8 : 16
     const a1 = shuffle(length)
     const a2 = shuffle(length)
@@ -118,16 +119,19 @@ const Home: NextPage = () => {
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
-    console.log(bombSetFld)
     return bombSetFld
-  }, [level, fieldData])
+  }
+  const [bombPosition, setBombPosition] = useState(bombSet)
 
   const overClick = (x: number, y: number) => {
     const newField = JSON.parse(JSON.stringify(field))
     newField[x][y] = true
     setField(newField)
   }
-
+  const clear = () => {
+    setField(fieldClick)
+    setBombPosition(bombSet)
+  }
   return (
     <Container>
       <Head>
@@ -138,11 +142,12 @@ const Home: NextPage = () => {
       </Head>
 
       <Main>
+        <button onClick={clear}>クリア</button>
         <Grid>
           {bombPosition.map((row, x) =>
             row.map((col, y) => (
               <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
-                {bombSet(col, x, y)}
+                {clickPanel(col, x, y)}
               </Area>
             ))
           )}
