@@ -69,21 +69,27 @@ const Logo = styled.span`
 const Home: NextPage = () => {
   const [level, setLevel] = useState(0)
 
-  const fieldData: number[][] = useMemo(() => {
-    const length = level < 1 ? 8 : 16
-    const margin = level < 1 ? 2 : 4
-    return [...Array(length)].map(() => [...Array(length + margin)].map(() => 0))
+  const fieldComponet = useMemo(() => {
+    return {
+      len: level < 1 ? 8 : 16,
+      margin: level < 1 ? 2 : 4,
+    }
   }, [level])
 
-  const fieldClick: boolean[][] = useMemo(() => {
-    const length = level < 1 ? 8 : 16
-    return [...Array(length)].map(() => [...Array(length)].map(() => false))
-  }, [level])
+  const fieldData = () => {
+    const fc = fieldComponet
+    return [...Array(fc.len + 2)].map(() => [...Array(fc.len + fc.margin + 2)].map(() => 0))
+  }
+
+  const fieldClick = () => {
+    const fc = fieldComponet
+    return [...Array(fc.len + 2)].map(() => [...Array(fc.len + fc.margin + 2)].map(() => false))
+  }
 
   const [field, setField] = useState(fieldClick)
 
   const shuffle = (len: number) => {
-    const arr = [...Array(len)].map((elm, idx) => idx)
+    const arr = [...Array(len)].map((elm, idx) => idx + 1)
     let a = arr.length
     while (a) {
       const j = Math.floor(Math.random() * a)
@@ -99,23 +105,24 @@ const Home: NextPage = () => {
     return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
   }
 
+  // prettier-ignore
+  const directions: number[][] = [
+    [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]
+  ]
+
   const bombSet = () => {
-    const length = level < 1 ? 8 : 16
-    const a1 = shuffle(length)
-    const a2 = shuffle(length)
-    const bombSetFld = fieldData
-    // prettier-ignore
-    const directions: number[][] = [
-      [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]
-    ]
-    for (let i = 0; i < length; i++) {
+    const fc = fieldComponet
+    const a1 = shuffle(fc.len)
+    const a2 = shuffle(fc.len)
+    const bombSetFld = fieldData()
+    for (let i = 0; i < fc.len; i++) {
       const x = a1[i]
       const y = a2[i]
       bombSetFld[x][y] = 99
       for (const direction of directions) {
         const newX = x + direction[0] * 1
         const newY = y + direction[1] * 1
-        if (newX < 0 || newY < 0 || newX > length - 1 || newY > length - 1) continue
+        // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len - 1) continue
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
@@ -123,13 +130,38 @@ const Home: NextPage = () => {
   }
   const [bombPosition, setBombPosition] = useState(bombSet)
 
+  const zeroOpen = (field: boolean[][], x: number, y: number) => {
+    const fc = fieldComponet
+    const candidates = []
+    for (const direction of directions) {
+      for (let n = 1; n < fc.len; n++) {
+        const newX = x + direction[0] * n
+        const newY = y + direction[1] * n
+        // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
+        if (bombPosition[newX][newY] === 0) {
+          candidates.push({ row: newX, col: newY })
+        } else {
+          break
+        }
+      }
+      if (candidates.length > 0) {
+        // 隣あう0のマスをオープンする
+        for (const cell of candidates) field[cell.row][cell.col] = true
+      }
+      candidates.splice(0, candidates.length)
+    }
+    return field
+  }
+
   const overClick = (x: number, y: number) => {
-    const newField = JSON.parse(JSON.stringify(field))
+    let newField = JSON.parse(JSON.stringify(field))
+    if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
     newField[x][y] = true
     setField(newField)
   }
+
   const clear = () => {
-    setField(fieldClick)
+    setField(fieldClick())
     setBombPosition(bombSet)
   }
   return (
