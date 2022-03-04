@@ -71,25 +71,27 @@ const Home: NextPage = () => {
 
   const fieldComponet = useMemo(() => {
     return {
-      len: level < 1 ? 8 : 16,
+      len: level < 1 ? 10 : 18,
       margin: level < 1 ? 2 : 4,
+      bomb: level < 1 ? 8 : 16,
     }
   }, [level])
 
   const fieldData = () => {
     const fc = fieldComponet
-    return [...Array(fc.len + 2)].map(() => [...Array(fc.len + fc.margin + 2)].map(() => 0))
+    return [...Array(fc.len)].map(() => [...Array(fc.len + fc.margin)].map(() => 0))
   }
 
   const fieldClick = () => {
     const fc = fieldComponet
-    return [...Array(fc.len + 2)].map(() => [...Array(fc.len + fc.margin + 2)].map(() => false))
+    return [...Array(fc.len)].map(() => [...Array(fc.len + fc.margin)].map(() => false))
   }
 
   const [field, setField] = useState(fieldClick)
 
-  const shuffle = (len: number) => {
-    const arr = [...Array(len)].map((elm, idx) => idx + 1)
+  const shuffle = () => {
+    const fc = fieldComponet
+    const arr = [...Array(fc.bomb)].map((elm, idx) => idx + 1)
     let a = arr.length
     while (a) {
       const j = Math.floor(Math.random() * a)
@@ -112,12 +114,12 @@ const Home: NextPage = () => {
 
   const bombSet = () => {
     const fc = fieldComponet
-    const a1 = shuffle(fc.len)
-    const a2 = shuffle(fc.len)
+    const a1 = shuffle()
+    const a2 = shuffle()
     const bombSetFld = fieldData()
-    for (let i = 0; i < fc.len; i++) {
-      const x = a1[i]
-      const y = a2[i]
+    for (let i = 1; i < fc.len - 1; i++) {
+      const x = a1[i - 1]
+      const y = a2[i - 1]
       bombSetFld[x][y] = 99
       for (const direction of directions) {
         const newX = x + direction[0] * 1
@@ -134,10 +136,11 @@ const Home: NextPage = () => {
     const fc = fieldComponet
     const candidates = []
     for (const direction of directions) {
-      for (let n = 1; n < fc.len; n++) {
+      for (let n = 0; n < fc.len; n++) {
         const newX = x + direction[0] * n
         const newY = y + direction[1] * n
         // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
+        console.log(newX, newY)
         if (bombPosition[newX][newY] === 0) {
           candidates.push({ row: newX, col: newY })
         } else {
@@ -164,6 +167,17 @@ const Home: NextPage = () => {
     setField(fieldClick())
     setBombPosition(bombSet)
   }
+
+  const displayField = () => {
+    const fc = fieldComponet
+    for (let i = 1; i < fc.len - 1; i++) {
+      for (let l = 1; i < fc.len + fc.margin - 1; l++) {
+        ;<Area key={`${i}-${l}`} click={field[i][l]} onClick={() => overClick(i, l)}>
+          {clickPanel(bombPosition[i][l], i, l)}
+        </Area>
+      }
+    }
+  }
   return (
     <Container>
       <Head>
@@ -175,15 +189,7 @@ const Home: NextPage = () => {
 
       <Main>
         <button onClick={clear}>クリア</button>
-        <Grid>
-          {bombPosition.map((row, x) =>
-            row.map((col, y) => (
-              <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
-                {clickPanel(col, x, y)}
-              </Area>
-            ))
-          )}
-        </Grid>
+        <Grid>{displayField}</Grid>
       </Main>
 
       <Footer>
