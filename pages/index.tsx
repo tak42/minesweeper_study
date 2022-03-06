@@ -84,9 +84,8 @@ const Home: NextPage = () => {
 
   const fieldClick = () => {
     const fc = fieldComponet
-    return [...Array(fc.len)].map(() => [...Array(fc.len + fc.margin)].map(() => false))
+    return [...Array(fc.len - 2)].map(() => [...Array(fc.len + fc.margin - 2)].map(() => false))
   }
-
   const [field, setField] = useState(fieldClick)
 
   const shuffle = () => {
@@ -100,11 +99,6 @@ const Home: NextPage = () => {
       arr[j] = t
     }
     return arr
-  }
-
-  const clickPanel = (val: number, x: number, y: number) => {
-    const displayVal = val < 99 && field[x][y] ? val : ''
-    return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
   }
 
   // prettier-ignore
@@ -128,6 +122,8 @@ const Home: NextPage = () => {
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
+    console.log(bombSetFld.length)
+    console.log(bombSetFld[0].length)
     return bombSetFld
   }
   const [bombPosition, setBombPosition] = useState(bombSet)
@@ -156,9 +152,16 @@ const Home: NextPage = () => {
     return field
   }
 
+  const displayData = (val: number, x: number, y: number) => {
+    const displayVal = val < 99 && field[x][y] ? val : ''
+    return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
+  }
+
   const overClick = (x: number, y: number) => {
     let newField = JSON.parse(JSON.stringify(field))
-    if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
+    const bombx = x + 1
+    const bomby = y + 1
+    if (bombPosition[bombx][bomby] === 0) newField = zeroOpen(newField, x, y)
     newField[x][y] = true
     setField(newField)
   }
@@ -168,16 +171,6 @@ const Home: NextPage = () => {
     setBombPosition(bombSet)
   }
 
-  const displayField = () => {
-    const fc = fieldComponet
-    for (let i = 1; i < fc.len - 1; i++) {
-      for (let l = 1; i < fc.len + fc.margin - 1; l++) {
-        ;<Area key={`${i}-${l}`} click={field[i][l]} onClick={() => overClick(i, l)}>
-          {clickPanel(bombPosition[i][l], i, l)}
-        </Area>
-      }
-    }
-  }
   return (
     <Container>
       <Head>
@@ -189,7 +182,15 @@ const Home: NextPage = () => {
 
       <Main>
         <button onClick={clear}>クリア</button>
-        <Grid>{displayField}</Grid>
+        <Grid>
+          {field.map((row, x) =>
+            row.map((col, y) => (
+              <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
+                {displayData(bombPosition[x + 1][y + 1], x, y)}
+              </Area>
+            ))
+          )}
+        </Grid>
       </Main>
 
       <Footer>
