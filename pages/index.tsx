@@ -36,11 +36,11 @@ const Grid = styled.div`
   }
 `
 
-const Area = styled.div<{ click: boolean }>`
+const Area = styled.div<{ clicked: boolean }>`
   width: 50px;
   height: 50px;
   border: 1px solid black;
-  background-color: ${(props) => (props.click ? 'transparent' : 'green')};
+  background-color: ${(props) => (props.clicked ? 'transparent' : 'green')};
   text-align: center;
   line-height: 50px;
 `
@@ -128,17 +128,24 @@ const Home: NextPage = () => {
   }
   const [bombPosition, setBombPosition] = useState(bombSet)
 
+  const displayData = (x: number, y: number) => {
+    const isPanelOpen = field[x][y]
+    const bombN = bombPosition[x + 1][y + 1]
+    if (!isPanelOpen) return ''
+    return bombN === 99 ? <i className="fas fa-bomb fa-lg" /> : bombN
+  }
+
   const zeroOpen = (field: boolean[][], x: number, y: number) => {
     const fc = fieldComponet
     const candidates = []
     for (const direction of directions) {
       for (let n = 0; n < fc.len; n++) {
-        const newX = x + direction[0] * n
-        const newY = y + direction[1] * n
+        const newX = x + 1 + direction[0] * n
+        const newY = y + 1 + direction[1] * n
         // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
         console.log(newX, newY)
         if (bombPosition[newX][newY] === 0) {
-          candidates.push({ row: newX, col: newY })
+          candidates.push({ row: newX - 1, col: newY - 1 })
         } else {
           break
         }
@@ -152,16 +159,10 @@ const Home: NextPage = () => {
     return field
   }
 
-  const displayData = (val: number, x: number, y: number) => {
-    const displayVal = val < 99 && field[x][y] ? val : ''
-    return val === 99 && field[x][y] ? <i className="fas fa-bomb fa-lg" /> : displayVal
-  }
-
-  const overClick = (x: number, y: number) => {
+  const openPanel = (x: number, y: number) => {
     let newField = JSON.parse(JSON.stringify(field))
-    const bombx = x + 1
-    const bomby = y + 1
-    if (bombPosition[bombx][bomby] === 0) newField = zeroOpen(newField, x, y)
+    const bombN = bombPosition[x + 1][y + 1]
+    if (bombN === 0) newField = zeroOpen(newField, x, y)
     newField[x][y] = true
     setField(newField)
   }
@@ -185,8 +186,8 @@ const Home: NextPage = () => {
         <Grid>
           {field.map((row, x) =>
             row.map((col, y) => (
-              <Area key={`${x}-${y}`} click={field[x][y]} onClick={() => overClick(x, y)}>
-                {displayData(bombPosition[x + 1][y + 1], x, y)}
+              <Area key={`${x}-${y}`} clicked={field[x][y]} onClick={() => openPanel(x, y)}>
+                {displayData(x, y)}
               </Area>
             ))
           )}
