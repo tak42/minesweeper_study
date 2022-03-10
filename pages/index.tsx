@@ -118,12 +118,9 @@ const Home: NextPage = () => {
       for (const direction of directions) {
         const newX = x + direction[0] * 1
         const newY = y + direction[1] * 1
-        // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len - 1) continue
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
-    console.log(bombSetFld.length)
-    console.log(bombSetFld[0].length)
     return bombSetFld
   }
   const [bombPosition, setBombPosition] = useState(bombSet)
@@ -138,11 +135,14 @@ const Home: NextPage = () => {
   const zeroOpen = (field: boolean[][], x: number, y: number) => {
     const fc = fieldComponet
     const candidates = []
+    const bombX = x + 1
+    const bombY = y + 1
     for (const direction of directions) {
       for (let n = 0; n < fc.len; n++) {
-        const newX = x + 1 + direction[0] * n
-        const newY = y + 1 + direction[1] * n
-        // if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
+        console.log(bombX, bombY, n)
+        console.log(direction)
+        const newX = bombX + direction[0] * n
+        const newY = bombY + direction[1] * n
         console.log(newX, newY)
         if (bombPosition[newX][newY] === 0) {
           candidates.push({ row: newX - 1, col: newY - 1 })
