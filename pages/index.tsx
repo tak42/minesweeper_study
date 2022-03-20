@@ -71,7 +71,7 @@ const Home: NextPage = () => {
 
   const fieldComponet = useMemo(() => {
     return {
-      len: level < 1 ? 10 : 18,
+      len: level < 1 ? 8 : 14,
       margin: level < 1 ? 2 : 4,
       bomb: level < 1 ? 8 : 16,
     }
@@ -84,13 +84,13 @@ const Home: NextPage = () => {
 
   const fieldClick = () => {
     const fc = fieldComponet
-    return [...Array(fc.len - 2)].map(() => [...Array(fc.len + fc.margin - 2)].map(() => false))
+    return [...Array(fc.len)].map(() => [...Array(fc.len + fc.margin)].map(() => false))
   }
   const [field, setField] = useState(fieldClick)
 
   const shuffle = () => {
     const fc = fieldComponet
-    const arr = [...Array(fc.bomb)].map((elm, idx) => idx + 1)
+    const arr = [...Array(fc.bomb)].map((elm, idx) => idx)
     let a = arr.length
     while (a) {
       const j = Math.floor(Math.random() * a)
@@ -111,13 +111,14 @@ const Home: NextPage = () => {
     const a1 = shuffle()
     const a2 = shuffle()
     const bombSetFld = fieldData()
-    for (let i = 1; i < fc.len - 1; i++) {
-      const x = a1[i - 1]
-      const y = a2[i - 1]
+    for (let i = 0; i < fc.len; i++) {
+      const x = a1[i]
+      const y = a2[i]
       bombSetFld[x][y] = 99
       for (const direction of directions) {
         const newX = x + direction[0] * 1
         const newY = y + direction[1] * 1
+        if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
@@ -127,7 +128,7 @@ const Home: NextPage = () => {
 
   const displayData = (x: number, y: number) => {
     const isPanelOpen = field[x][y]
-    const bombN = bombPosition[x + 1][y + 1]
+    const bombN = bombPosition[x][y]
     if (!isPanelOpen) return ''
     return bombN === 99 ? <i className="fas fa-bomb fa-lg" /> : bombN
   }
@@ -135,24 +136,23 @@ const Home: NextPage = () => {
   const zeroOpen = (field: boolean[][], x: number, y: number) => {
     const fc = fieldComponet
     const candidates = []
-    const bombX = x + 1
-    const bombY = y + 1
     for (const direction of directions) {
-      for (let n = 0; n < fc.len; n++) {
-        console.log(bombX, bombY, n)
-        console.log(direction)
-        const newX = bombX + direction[0] * n
-        const newY = bombY + direction[1] * n
-        console.log(newX, newY)
+      for (let n = 1; n < fc.len; n++) {
+        // 範囲を超えて探索してしまう
+        const newX = x + direction[0] * n
+        const newY = y + direction[1] * n
+        if (newX < 0 || newY < 0 || newX > fc.len || newY > fc.len + fc.margin) break
         if (bombPosition[newX][newY] === 0) {
-          candidates.push({ row: newX - 1, col: newY - 1 })
+          candidates.push({ row: newX, col: newY })
         } else {
           break
         }
       }
       if (candidates.length > 0) {
         // 隣あう0のマスをオープンする
-        for (const cell of candidates) field[cell.row][cell.col] = true
+        for (const cell of candidates) {
+          field[cell.row][cell.col] = true
+        }
       }
       candidates.splice(0, candidates.length)
     }
@@ -161,7 +161,7 @@ const Home: NextPage = () => {
 
   const openPanel = (x: number, y: number) => {
     let newField = JSON.parse(JSON.stringify(field))
-    const bombN = bombPosition[x + 1][y + 1]
+    const bombN = bombPosition[x][y]
     if (bombN === 0) newField = zeroOpen(newField, x, y)
     newField[x][y] = true
     setField(newField)
