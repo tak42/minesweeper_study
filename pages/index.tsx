@@ -141,7 +141,8 @@ const Home: NextPage = () => {
         // 範囲を超えて探索してしまう
         const newX = x + direction[0] * n
         const newY = y + direction[1] * n
-        if (newX < 0 || newY < 0 || newX > fc.len || newY > fc.len + fc.margin) break
+        if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
+        console.log(newX, newY)
         if (bombPosition[newX][newY] === 0) {
           candidates.push({ row: newX, col: newY })
         } else {
