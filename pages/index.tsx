@@ -88,7 +88,7 @@ const Home: NextPage = () => {
   }
   const [field, setField] = useState(fieldClick)
 
-  const shuffle = () => {
+  const shuffle = (x: number, y: number) => {
     const fc = fieldComponet
     const arr = [...Array(fc.bomb)].map((elm, idx) => idx)
     let a = arr.length
@@ -105,11 +105,14 @@ const Home: NextPage = () => {
   const directions: number[][] = [
     [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1]
   ]
+  // 初回はボムをクリックさせない
+  // 区域を分けて、ボムの配置を意図的に避けさせる
+  // 初回クリック時の位置からX+2、Y+2以外の場所にボムを配置
 
-  const bombSet = () => {
+  const bombSet = (x: number, y: number) => {
     const fc = fieldComponet
-    const a1 = shuffle()
-    const a2 = shuffle()
+    const a1 = shuffle(x, y)
+    const a2 = shuffle(x, y)
     const bombSetFld = fieldData()
     for (let i = 0; i < fc.len; i++) {
       const x = a1[i]
@@ -124,7 +127,7 @@ const Home: NextPage = () => {
     }
     return bombSetFld
   }
-  const [bombPosition, setBombPosition] = useState(bombSet)
+  const [bombPosition, setBombPosition] = useState(fieldData)
 
   const displayData = (x: number, y: number) => {
     const isPanelOpen = field[x][y]
@@ -142,7 +145,6 @@ const Home: NextPage = () => {
         const newX = x + direction[0] * n
         const newY = y + direction[1] * n
         if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
-        console.log(newX, newY)
         if (bombPosition[newX][newY] === 0) {
           candidates.push({ row: newX, col: newY })
         } else {
@@ -159,8 +161,11 @@ const Home: NextPage = () => {
     }
     return field
   }
-
+  const [isBegin, setIsBegin] = useState(false)
   const openPanel = (x: number, y: number) => {
+    if (!isBegin) {
+      setBombPosition(bombSet(x, y))
+    }
     let newField = JSON.parse(JSON.stringify(field))
     const bombN = bombPosition[x][y]
     if (bombN === 0) newField = zeroOpen(newField, x, y)
