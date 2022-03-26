@@ -205,26 +205,9 @@ const Home: NextPage = () => {
   const zeroOpen = (field: boolean[][], x: number, y: number) => {
     const fc = fieldComponet
     const candidates = []
-    for (const direction of directions) {
-      for (let n = 1; n < fc.len; n++) {
-        // 範囲を超えて探索してしまう
-        const newX = x + direction[0] * n
-        const newY = y + direction[1] * n
-        if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > fc.len + fc.margin - 1) break
-        if (bombPosition[newX][newY] === 0) {
-          candidates.push({ row: newX, col: newY })
-        } else {
-          break
-        }
-      }
-      if (candidates.length > 0) {
-        // 隣あう0のマスをオープンする
-        for (const cell of candidates) {
-          field[cell.row][cell.col] = true
-        }
-      }
-      candidates.splice(0, candidates.length)
-    }
+    // 1.まずはクリックされた0と隣り合う1以上のマスを探す
+    // 2.1のものが存在するまで探す
+    // 3.探索を中止して1以上のマスまでをオープンする
     return field
   }
   const [isBegin, setIsBegin] = useState(false)
@@ -233,13 +216,10 @@ const Home: NextPage = () => {
     console.log(isBegin)
     if (!isBegin) {
       firstBombSet()
-      // setBombPosition(bombSet(x, y))
       setIsBegin(true)
-      // return false
     }
     let newField = JSON.parse(JSON.stringify(field))
-    const bombN = bombPosition[x][y]
-    if (bombN === 0) newField = zeroOpen(newField, x, y)
+    if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
     newField[x][y] = true
     setField(newField)
   }
