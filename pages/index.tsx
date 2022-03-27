@@ -208,6 +208,12 @@ const Home: NextPage = () => {
     // 1.まずはクリックされた0と隣り合う1以上のマスを探す
     // 2.1のものが存在するまで探す
     // 3.探索を中止して1以上のマスまでをオープンする
+    if (bombPosition[x][y] > 0) return false
+    for (const direction of directions) {
+      const newX = x + direction[0]
+      const newY = y + direction[1]
+      if (!bombPosition[newX][newY]) field[newX][newY] = true
+    }
     return field
   }
   const [isBegin, setIsBegin] = useState(false)
