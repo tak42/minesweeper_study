@@ -89,13 +89,6 @@ const Home: NextPage = () => {
   }
   const [field, setField] = useState(fieldClick)
   const [bombPosition, setBombPosition] = useState(fieldData)
-  // 初回はボムをクリックさせない
-  // 区域を分けて、ボムの配置を意図的に避けさせる
-  // 初回クリック時の位置からX+-1、Y+-1以外の場所にボムを配置
-  // 例）
-  // 初回クリック位置：x=1,y=2(盤面でいうと左上）x=0~2,y=1~3が安全地帯(0,1)~(2,3)まで
-  // 安全地帯以外の数字を使用して配列を作成
-  // 作成した配列2つから数字の組み合わせをボムの数だけ考える
   const shuffle = (max: number, min: number) => {
     const fc = fieldComponet
     const arr = [...Array(fc.bomb)].map((elm, idx) => idx)
@@ -112,20 +105,15 @@ const Home: NextPage = () => {
   const randomNextMaker = (ary: number[]) => {
     // 引数のary のコピーを作成
     ary = [...ary]
-
     return () => {
       // 配列が空になっている場合
       if (ary.length === 0) return { done: true }
-
       // 0以上 ary.length-1以下の整数を取得
       const randomIndex = Math.floor(Math.random() * ary.length)
-
       // 返却すべき要素を取得
       const value = ary[randomIndex]
-
       // randomIndexの位置の要素を除去
       ary.splice(randomIndex, 1)
-
       return { value, done: false }
     }
   }
@@ -159,7 +147,6 @@ const Home: NextPage = () => {
       if (val === undefined) {
         continue
       }
-      console.log(val[0], val[1])
       bombSetFld[val[0]][val[1]] = 99
       for (const direction of directions) {
         const newX = val[0] + direction[0] * 1
@@ -179,7 +166,6 @@ const Home: NextPage = () => {
     const fc = fieldComponet
     const a1 = shuffle(x + 1, x - 1)
     const a2 = shuffle(y + 1, y - 1)
-    console.log(a1, a2)
     const bombSetFld = fieldData()
     for (let i = 0; i < fc.len; i++) {
       const x = a1[i]
@@ -205,29 +191,42 @@ const Home: NextPage = () => {
   const zeroOpen = (field: boolean[][], x: number, y: number) => {
     const fc = fieldComponet
     const candidates = []
+    const side = fc.len + fc.margin
     // 1.まずはクリックされた0と隣り合う1以上のマスを探す
     // 2.1のものが存在するまで探す
     // 3.探索を中止して1以上のマスまでをオープンする
     if (bombPosition[x][y] > 0) return false
-    for (const direction of directions) {
-      const newX = x + direction[0]
-      const newY = y + direction[1]
-      if (!bombPosition[newX][newY]) field[newX][newY] = true
+    // for (const direction of directions) {
+    //   const newX = x === fc.len - 1 || x === 0 ? x : x + direction[0]
+    //   const newY = y === side - 1 || y === 0 ? y : y + direction[1]
+    //   if (!bombPosition[newX][newY]) field[newX][newY] = true
+    // }
+    for (let i = 0; i < fc.len; i++) {
+      for (let l = 0; l < side; l++) {
+        if (!bombPosition[i][l]) field[i][l] = true
+      }
     }
     return field
   }
   const [isBegin, setIsBegin] = useState(false)
 
+  const beginCheck = (isBegin: boolean) => {
+    return new Promise((resolve, reject) => {
+      if (!isBegin) {
+        firstBombSet()
+        setIsBegin(true)
+      }
+      resolve
+    })
+  }
   const openPanel = (x: number, y: number, isBegin: boolean) => {
     console.log(isBegin)
-    if (!isBegin) {
-      firstBombSet()
-      setIsBegin(true)
-    }
-    let newField = JSON.parse(JSON.stringify(field))
-    if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
-    newField[x][y] = true
-    setField(newField)
+    beginCheck(isBegin).then(() => {
+      let newField = JSON.parse(JSON.stringify(field))
+      if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
+      newField[x][y] = true
+      setField(newField)
+    })
   }
 
   const clear = () => {
