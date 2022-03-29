@@ -192,20 +192,17 @@ const Home: NextPage = () => {
     const fc = fieldComponet
     const candidates = []
     const side = fc.len + fc.margin
-    // 1.まずはクリックされた0と隣り合う1以上のマスを探す
-    // 2.1のものが存在するまで探す
-    // 3.探索を中止して1以上のマスまでをオープンする
+    // 1.まずはクリックされた0のマスから隣り合う0のマスを探す
+    // 2.探し終えたら外側にある0のマスの周りをオープンする
     if (bombPosition[x][y] > 0) return false
-    // for (const direction of directions) {
-    //   const newX = x === fc.len - 1 || x === 0 ? x : x + direction[0]
-    //   const newY = y === side - 1 || y === 0 ? y : y + direction[1]
-    //   if (!bombPosition[newX][newY]) field[newX][newY] = true
-    // }
+    // 0マスの候補を洗い出し
     for (let i = 0; i < fc.len; i++) {
       for (let l = 0; l < side; l++) {
-        if (!bombPosition[i][l]) field[i][l] = true
+        if (!bombPosition[i][l]) candidates.push([i, l])
       }
     }
+    // クリック位置の0のマスと隣り合っているかどうか
+    // directionsに従いマスをオープン
     return field
   }
   const [isBegin, setIsBegin] = useState(false)
@@ -216,12 +213,13 @@ const Home: NextPage = () => {
         firstBombSet()
         setIsBegin(true)
       }
-      resolve
+      return resolve(true)
     })
   }
   const openPanel = (x: number, y: number, isBegin: boolean) => {
     console.log(isBegin)
-    beginCheck(isBegin).then(() => {
+    beginCheck(isBegin).then((result) => {
+      console.log('test', result)
       let newField = JSON.parse(JSON.stringify(field))
       if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
       newField[x][y] = true
