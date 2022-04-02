@@ -155,7 +155,7 @@ const Home: NextPage = () => {
         if (bombSetFld[newX][newY] != 99) bombSetFld[newX][newY] += 1
       }
     }
-    setBombPosition(bombSetFld)
+    return bombSetFld
   }
   // prettier-ignore
   const directions: number[][] = [
@@ -185,57 +185,52 @@ const Home: NextPage = () => {
     const isPanelOpen = field[x][y]
     const bombN = bombPosition[x][y]
     if (!isPanelOpen) return ''
-    return bombN === 99 ? '〇' : bombN
+    let data = String(bombN)
+    if (bombN === 99) data = '〇'
+    if (bombN === 0) data = ''
+    return data
   }
 
-  const zeroOpen = (field: boolean[][], x: number, y: number) => {
-    const fc = fieldComponet
-    const side = fc.len + fc.margin
-    // 1.まずはクリックされた0のマスから隣り合う0のマスを探す
-    // 2.探し終えたら外側にある0のマスの周りをオープンする
-    revealCells(field, x, y)
-    // 0マスの候補を洗い出し
-    // クリック位置の0のマスと隣り合っているかどうか
-    // directionsに従いマスをオープン
-    return field
-  }
-  const revealCells = (field: boolean[][], x: number, y: number) => {
+  const revealCells = (field: boolean[][], bombField: number[][], x: number, y: number) => {
     const fc = fieldComponet
     const side = fc.len + fc.margin
     field[x][y] = true
-    console.log(x, y, bombPosition[x][y])
-    if (bombPosition[x][y] > 0) return false
+    if (bombField[x][y] > 0) return false
     for (const direction of directions) {
       const newX = x + direction[0] * 1
       const newY = y + direction[1] * 1
       if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > side - 1) continue
       if (field[newX][newY] === true) continue
-      revealCells(field, newX, newY)
+      revealCells(field, bombField, newX, newY)
     }
+    return field
   }
   const [isBegin, setIsBegin] = useState(false)
   const beginCheck = (isBegin: boolean) => {
-    return new Promise((resolve, reject) => {
+    return new Promise<number[][]>((resolve, reject) => {
       if (!isBegin) {
-        firstBombSet()
+        const bombField = firstBombSet()
         setIsBegin(true)
+        return resolve(bombField)
       }
-      return resolve(true)
+      return resolve(bombPosition)
     })
   }
   const openPanel = (x: number, y: number, isBegin: boolean) => {
-    beginCheck(isBegin).then((result) => {
+    beginCheck(isBegin).then((check) => {
       // bombPositionの処理が間に合っていないため初回クリック時にすべてのマスがオープンしてしまう
       let newField = JSON.parse(JSON.stringify(field))
-      if (bombPosition[x][y] === 99) console.log('負け')
-      if (bombPosition[x][y] === 0) newField = zeroOpen(newField, x, y)
+      const bombField = check
+      setBombPosition(bombField)
+      if (bombField[x][y] === 99) console.log('負け')
+      if (bombField[x][y] === 0) newField = revealCells(newField, bombField, x, y)
       setField(newField)
     })
   }
 
   const clear = () => {
     setField(fieldClick())
-    // setBombPosition(bombSet)
+    setBombPosition(firstBombSet())
   }
 
   return (
