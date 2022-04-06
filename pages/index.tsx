@@ -160,7 +160,9 @@ const Home: NextPage = () => {
     }
     return field
   }
+
   const [isBegin, setIsBegin] = useState(false)
+
   const beginCheck = (isBegin: boolean, cell: cell) => {
     return new Promise<number[][]>((resolve, reject) => {
       if (!isBegin) {
@@ -171,15 +173,26 @@ const Home: NextPage = () => {
       return resolve(bombPosition)
     })
   }
+
+  const successCheck = (bombField: number[][], field: boolean[][]) => {
+    const closeN = field.filter((x) => {
+      return x.filter((y) => {
+        return !y
+      })
+    })
+    console.log(closeN)
+  }
+
   const openPanel = (cell: cell, isBegin: boolean) => {
     beginCheck(isBegin, cell).then((check) => {
       // bombPositionの処理が間に合っていないため初回クリック時にすべてのマスがオープンしてしまう
       let newField = JSON.parse(JSON.stringify(field))
       const bombField = check
       setBombPosition(bombField)
-      if (bombField[cell[0]][cell[1]] === 99) console.log('負け')
+      if (bombField[cell[0]][cell[1]] === 99) alert('負けです。')
       newField = revealCells(newField, bombField, cell)
       setField(newField)
+      successCheck(bombField, newField)
     })
   }
 
