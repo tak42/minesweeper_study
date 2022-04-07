@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 const Container = styled.div`
@@ -175,12 +175,23 @@ const Home: NextPage = () => {
   }
 
   const successCheck = (bombField: number[][], field: boolean[][]) => {
-    const closeN = field.filter((x) => {
-      return x.filter((y) => {
-        return !y
+    const fc = fieldComponet
+    field
+      .flat()
+      .map((elm, idx) => {
+        return elm
+          ? { row: Math.floor(idx / 10), col: idx % 10, val: elm }
+          : { row: -1, col: -1, val: elm }
       })
-    })
-    console.log(closeN)
+      .filter((x) => x.val)
+      .forEach((item) => {
+        if (bombField[item.row][item.col] === 99) {
+          alert('失敗です')
+          return false
+        }
+      })
+    const closeN = field.flat().filter((e) => !e).length
+    if (fc.bomb === closeN) alert('成功です')
   }
 
   const openPanel = (cell: cell, isBegin: boolean) => {
@@ -189,10 +200,8 @@ const Home: NextPage = () => {
       let newField = JSON.parse(JSON.stringify(field))
       const bombField = check
       setBombPosition(bombField)
-      if (bombField[cell[0]][cell[1]] === 99) alert('負けです。')
       newField = revealCells(newField, bombField, cell)
       setField(newField)
-      successCheck(bombField, newField)
     })
   }
 
@@ -200,6 +209,10 @@ const Home: NextPage = () => {
     setField(fieldClick())
     setIsBegin(false)
   }
+
+  useEffect(() => {
+    successCheck(bombPosition, field)
+  })
 
   return (
     <Container>
