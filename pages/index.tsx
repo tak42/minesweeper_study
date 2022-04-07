@@ -89,8 +89,8 @@ const Home: NextPage = () => {
     const fc = fieldComponet
     return [...Array(fc.len)].map(() => [...Array(fc.len + fc.margin)].map(() => false))
   }
-  const [field, setField] = useState(fieldClick)
-
+  const [openPosition, setOpenPosition] = useState(fieldClick)
+  const [flagPosition, setFlagPosition] = useState(fieldClick)
   const [bombPosition, setBombPosition] = useState(fieldData)
 
   // prettier-ignore
@@ -135,8 +135,10 @@ const Home: NextPage = () => {
   }
 
   const displayData = (x: number, y: number) => {
-    const isPanelOpen = field[x][y]
+    const isPanelOpen = openPosition[x][y]
+    const isFlag = flagPosition[x][y]
     const bombN = bombPosition[x][y]
+    if (isFlag) return '旗'
     if (!isPanelOpen) return ''
     let data = String(bombN)
     if (bombN === 99) data = '〇'
@@ -144,21 +146,21 @@ const Home: NextPage = () => {
     return data
   }
 
-  const revealCells = (field: boolean[][], bombField: number[][], cell: cell) => {
+  const revealCells = (openPosition: boolean[][], bombField: number[][], cell: cell) => {
     const fc = fieldComponet
     const side = fc.len + fc.margin
     const x = cell[0]
     const y = cell[1]
-    field[x][y] = true
-    if (bombField[x][y] > 0) return field
+    openPosition[x][y] = true
+    if (bombField[x][y] > 0) return openPosition
     for (const direction of directions) {
       const newX = x + direction[0] * 1
       const newY = y + direction[1] * 1
       if (newX < 0 || newY < 0 || newX > fc.len - 1 || newY > side - 1) continue
-      if (field[newX][newY] === true) continue
-      revealCells(field, bombField, [newX, newY])
+      if (openPosition[newX][newY] === true) continue
+      revealCells(openPosition, bombField, [newX, newY])
     }
-    return field
+    return openPosition
   }
 
   const [isBegin, setIsBegin] = useState(false)
@@ -174,9 +176,9 @@ const Home: NextPage = () => {
     })
   }
 
-  const successCheck = (bombField: number[][], field: boolean[][]) => {
+  const successCheck = (bombField: number[][], openPosition: boolean[][]) => {
     const fc = fieldComponet
-    field
+    openPosition
       .flat()
       .map((elm, idx) => {
         return elm
@@ -190,28 +192,35 @@ const Home: NextPage = () => {
           return false
         }
       })
-    const closeN = field.flat().filter((e) => !e).length
+    const closeN = openPosition.flat().filter((e) => !e).length
     if (fc.bomb === closeN) alert('成功です')
   }
 
   const openPanel = (cell: cell, isBegin: boolean) => {
     beginCheck(isBegin, cell).then((check) => {
       // bombPositionの処理が間に合っていないため初回クリック時にすべてのマスがオープンしてしまう
-      let newField = JSON.parse(JSON.stringify(field))
+      let newField = JSON.parse(JSON.stringify(openPosition))
       const bombField = check
       setBombPosition(bombField)
       newField = revealCells(newField, bombField, cell)
-      setField(newField)
+      setOpenPosition(newField)
     })
   }
 
   const clear = () => {
-    setField(fieldClick())
+    setOpenPosition(fieldClick())
+    setFlagPosition(fieldClick())
     setIsBegin(false)
+  }
+  const flagSet = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, cell: cell) => {
+    e.preventDefault()
+    const newFlagP: boolean[][] = JSON.parse(JSON.stringify(flagPosition))
+    newFlagP[cell[0]][cell[1]] = true
+    setFlagPosition(newFlagP)
   }
 
   useEffect(() => {
-    successCheck(bombPosition, field)
+    successCheck(bombPosition, openPosition)
   })
 
   return (
@@ -225,12 +234,13 @@ const Home: NextPage = () => {
       <Main>
         <button onClick={clear}>クリア</button>
         <Grid>
-          {field.map((row, x) =>
+          {openPosition.map((row, x) =>
             row.map((col, y) => (
               <Area
                 key={`${x}-${y}`}
-                clicked={field[x][y]}
+                clicked={col}
                 onClick={() => openPanel([x, y], isBegin)}
+                onContextMenu={(e) => flagSet(e, [x, y])}
               >
                 {displayData(x, y)}
               </Area>
